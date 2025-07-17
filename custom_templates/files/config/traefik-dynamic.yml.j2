@@ -1,0 +1,10 @@
+http:
+  middlewares:
+    auth:
+      basicAuth:
+        users:
+          - "admin:somepw"
+  authentik:
+    forwardAuth:
+      address: "https://auth.example.de/outpost.goauthentik.io/auth/traefik"
+      trustForwardHeader: true

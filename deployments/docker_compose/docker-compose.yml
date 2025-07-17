@@ -1,0 +1,67 @@
+services:
+  traefik-dev:
+    image: "${SERVICE_IMAGE_NAME}:${SERVICE_IMAGE_TAG}"
+    container_name: ${SERVICE_NAME}
+    hostname: ${SERVICE_HOSTNAME}
+    restart: ${SERVICE_RESTART_POLICY}
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+    env_file: 
+      - .env
+      - stack.env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "${DEFAULT_DOCKER_DIR}/${SERVICE_NAME_LOWERCASE}/data:/data"
+      - "${DEFAULT_DOCKER_DIR}/${SERVICE_NAME_LOWERCASE}/log:/log"
+      - "${DEFAULT_DOCKER_DIR}/${SERVICE_NAME_LOWERCASE}/config:/etc/traefik"
+      - "${DEFAULT_DOCKER_DIR}/${SERVICE_NAME_LOWERCASE}/letsencrypt:/letsencrypt"
+    networks:
+      - secured
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+    labels:
+      # === Traefik Labels ===
+      - "traefik.enable=true"
+      - "traefik.docker.network=${DEFAULT_NETWORK_SECURED}"
+      - "traefik.http.routers.${SERVICE_NAME}.rule=Host(`${SERVICE_NAME}.${SERVICE_DOMAIN_NAME}`)" 
+      - "traefik.http.routers.${SERVICE_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${SERVICE_NAME}.tls=true"
+      - "traefik.http.routers.${SERVICE_NAME}.tls.certresolver=ionos"
+      - "traefik.http.services.${SERVICE_NAME}.loadbalancer.server.port=8080"
+
+      # === AutoDNS Labels ===
+      - "auto-dns.customDNS.${SERVICE_NAME}=true"
+      - "auto-dns.createWildcard.${SERVICE_NAME}=true"
+      - "auto-dns.customDOMAIN.${SERVICE_NAME}=${SERVICE_DOMAIN_NAME}"
+      - "auto-dns.customHost.${SERVICE_NAME}=${SERVICE_NAME}"
+
+      # === Homepage Labels ===
+      - "homepage.group=${SERVICE_CATEGORY}"
+      - "homepage.name=${SERVICE_NAME} ${SERVICE_HOSTNAME}"
+      - "homepage.href=https://${SERVICE_NAME}.${SERVICE_DOMAIN_NAME}"
+      - "homepage.icon=${SERVICE_ICON}"
+      - "homepage.description=${SERVICE_DESCRIPTION}"
+      - "homepage.widget.type=${HOMEPAGE_WIDGET_TYPE}"
+      - "homepage.widget.slug=${HOMEPAGE_WIDGET_SLUG}"
+      - "homepage.widget.url=https://${SERVICE_NAME}.${SERVICE_DOMAIN_NAME}"
+      - "homepage.showStats=true"
+
+networks:
+  secured:
+    external: True
+    name: "${DEFAULT_NETWORK_SECURED}"
+  exposed:
+    external: True
+    name: "${DEFAULT_NETWORK_EXPOSED}"
+  interconnect:
+    external: True
+    name: "${DEFAULT_NETWORK_INTERCONNECT}"

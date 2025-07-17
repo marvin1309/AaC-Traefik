@@ -1,0 +1,10 @@
+http:
+  middlewares:
+    auth:
+      basicAuth:
+        users:
+          - "admin:"
+  authentik:
+    forwardAuth:
+      address: "https://auth.int.fam-feser.de/outpost.goauthentik.io/auth/traefik"
+      trustForwardHeader: true
